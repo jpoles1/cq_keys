@@ -10,12 +10,12 @@ import cq_warehouse.extensions
 
 @dataclass
 class FoldingSwiss(StylishPart):
-    seg_h: float = 28
+    seg_h: float = 26
     seg_w: float = 50
-    seg_thick: float = 8
-    hinge_thick = 3
+    seg_thick: float = 6
+    hinge_thick = 4
 
-    screw_offset = 5
+    side_screw_offset = 7
 
     key_thick = 8
 
@@ -25,12 +25,14 @@ class FoldingSwiss(StylishPart):
     export: bool = True
 
     def calc_vars(self):
-        self.screw = SocketHeadCapScrew(size="M4-0.7", length=20, fastener_type="iso4762", simple=True)
-        self.nut = HexNut(size="M4-0.7", fastener_type="iso4032")
+        self.side_screw = SocketHeadCapScrew(size="M4-0.7", length=16, fastener_type="iso4762", simple=True)
+        self.mid_screw = SocketHeadCapScrew(size="M3-0.5", length=16, fastener_type="iso4762", simple=True)
+        self.side_nut = HexNut(size="M4-0.7", fastener_type="iso4032")
+        self.mid_nut = HexNut(size="M3-0.5", fastener_type="iso4032")
     
-    def make_seg(self, assembly, outer_seg=True, bolt_half=True, keyring=False): 
+    def make_seg(self, assembly, outer=True, bolt_half=True, keyring=False): 
         #If inner_seg, this is the segment which is on the inside of the hinge. It is thinner as it does not need to accomodate the bolt head/nut
-        hinge_cutout_thick = self.hinge_thick if outer_seg else self.seg_thick - self.hinge_thick
+        hinge_cutout_thick = self.seg_thick - self.hinge_thick if outer else self.hinge_thick
         hinge_cutout = (
             Workplane("XZ")
             .moveTo(self.seg_h/2,0)
@@ -50,8 +52,21 @@ class FoldingSwiss(StylishPart):
         )
 
         if keyring:
+            ring_or = 4
+            ring_ir = ring_or - 1
+            arm_l = 4
+            overlap_l = 2
             seg = seg.union(
-                Workplane("XY").moveTo(self.seg_w, 0).circle(2).extrude(self.seg_thick*0.8)
+                Workplane("XY")
+                .moveTo(-self.seg_w+self.seg_h/2-arm_l, 0)
+                .rect(arm_l+overlap_l,2*ring_or, centered=[0,1])
+                .moveTo(-self.seg_w+self.seg_h/2-arm_l, 0)
+                .circle(ring_or)
+                .extrude(self.seg_thick*0.6)
+                .moveTo(-self.seg_w+self.seg_h/2-arm_l, 0)
+                .circle(ring_ir)
+                .cutBlind(self.seg_thick*0.6)
+                .rotate((self.seg_h-self.seg_w,0,0), (self.seg_h-self.seg_w,0,1), 35)
             )
 
         divot_size = 1
@@ -77,22 +92,22 @@ class FoldingSwiss(StylishPart):
 
         if not bolt_half:
             seg = seg.rotate((0,0,0), (1,0,0), 180).translate((0,0,-self.key_thick))
-        if outer_seg:
+        if outer:
             seg = (
                 seg
                 .faces(">Z" if bolt_half else "<Z").workplane().moveTo(0,0)
-                .clearanceHole(fastener=self.screw if bolt_half else self.nut, captiveNut=not bolt_half, baseAssembly=assembly if outer_seg and self.show_screws else None, counterSunk=outer_seg)
-                .moveTo(-self.seg_w + self.seg_h,0)
-                .clearanceHole(fastener=self.screw if bolt_half else self.nut, captiveNut=not bolt_half, baseAssembly=assembly if outer_seg and self.show_screws else None, counterSunk=outer_seg)
+                .clearanceHole(fastener=self.mid_screw if bolt_half else self.mid_nut, captiveHex=not bolt_half, baseAssembly=assembly if outer and self.show_screws else None, counterSunk=outer)
+                .moveTo(self.side_screw_offset+self.seg_h/2-self.seg_w,0)
+                .clearanceHole(fastener=self.side_screw if bolt_half else self.side_nut, captiveHex=not bolt_half, baseAssembly=assembly if outer and self.show_screws else None, counterSunk=outer)
             )
         else:
             seg = (
                 seg
                 .faces(">Z").workplane().moveTo(0,0)
-                .clearanceHole(fastener=self.screw if bolt_half else self.nut, captiveNut=not bolt_half, baseAssembly=assembly if outer_seg and self.show_screws else None, counterSunk=outer_seg)
+                .clearanceHole(fastener=self.mid_screw if bolt_half else self.mid_nut, captiveHex=not bolt_half, baseAssembly=assembly if outer and self.show_screws else None, counterSunk=outer)
                 .faces("<Z" if bolt_half else ">Z").workplane()
-                .moveTo(-self.seg_w + self.seg_h,0)
-                .clearanceHole(fastener=self.screw if bolt_half else self.nut, captiveNut=not bolt_half, baseAssembly=assembly if outer_seg and self.show_screws else None, counterSunk=True)
+                .moveTo(self.side_screw_offset+self.seg_h/2-self.seg_w ,0)
+                .clearanceHole(fastener=self.side_screw if bolt_half else self.side_nut, captiveHex=not bolt_half, baseAssembly=assembly if outer and self.show_screws else None, counterSunk=True)
             )
             seg = (
                 seg.rotate((0,0,0), (0,1,0), 180)
@@ -110,10 +125,10 @@ class FoldingSwiss(StylishPart):
 
     def make(self):
         a = Assembly()
-        outer_bolt = self.make_seg(a, True, True)
-        inner_bolt = self.make_seg(a, False, True)
-        outer_nut = self.make_seg(a, True, False)
-        inner_nut = self.make_seg(a, False, False)
+        outer_bolt = self.make_seg(a, outer=True, bolt_half=True, keyring=True)
+        inner_bolt = self.make_seg(a, outer=False, bolt_half=True)
+        outer_nut = self.make_seg(a, outer=True, bolt_half=False)
+        inner_nut = self.make_seg(a, outer=False, bolt_half=False)
 
         if self.export:
             parts_export = {"outer_bolt": outer_bolt, "inner_bolt": inner_bolt, "outer_nut": outer_nut, "inner_nut": inner_nut}
@@ -129,5 +144,4 @@ class FoldingSwiss(StylishPart):
 
 if "show_object" in locals():
     FoldingSwiss(show_screws=1, export=0).display(show_object)
-    #FoldingSwiss(show_screws=1).export().display(show_object)
     #FoldingSwiss().display_split(show_object)
