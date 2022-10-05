@@ -92,11 +92,20 @@ class FoldingSwiss(StylishPart):
         )
     def make(self):
         a = Assembly()
-        #a.add(self.make_seg(a, True, True))
-        a.add(self.make_seg(a, False, True))
-        #a.add(self.make_seg(a, True, False))
-        #a.add(self.make_seg(a, False, False))
-        #a.add(self.make_mid_spacer())
+        outer_bolt = self.make_seg(a, True, True)
+        inner_bolt = self.make_seg(a, False, True)
+        outer_nut = self.make_seg(a, True, False)
+        inner_nut = self.make_seg(a, False, False)
+
+        parts_export = {"outer_bolt": outer_bolt, "inner_bolt": inner_bolt, "outer_nut": outer_nut, "inner_nut": inner_nut}
+        print(parts_export)
+        {exporters.export(shape, './export/{fname}.stl'.format(fname=name)) for (name, shape) in parts_export.items()}
+
+        a.add(outer_bolt)
+        a.add(inner_bolt)
+        a.add(outer_nut)
+        a.add(inner_nut)
+        a.add(self.make_mid_spacer())
         return a
 
 if "show_object" in locals():
