@@ -2,6 +2,7 @@
 
 I designed this fun key holder to give you easy access to your keys with a  compact, quiet, and interesting design. 
 
+![Folded device](snap_2.jpg)
 ![Render of The Design (No Transparency)](cap_3.png)
 
 This idea was originally inspired by the [Proteus Key Holder](https://www.thingiverse.com/thing:2749745/files) originally posted to thingiverse in 2018. Shortly after it was posted, I saw it while roaming thingiverse, and immedieately sliced it and fired it off to my aging Anet A8 clone (which I had salvaged from a pile of junk on the sidewalk, while walking on a rainy day in NYC). This printer needed a lot of TLC, and while I was able to get a successful print, it was pretty ugly. Nonetheless, I dropped my keys in, screwed it up, and it's been with me every day in my pocket since 2018. It has held up remarkably well, but I decided it was about time for an upgrade.
@@ -33,6 +34,5 @@ Note: You will need a few other things to get up and running:
 
 ## More Real World Images
 
-![Folded device](snap_2.jpg)
 ![Key in door 1](snap_3.jpg)
 ![Key in door 2](snap_4.jpg)
