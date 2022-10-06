@@ -11,7 +11,7 @@ import cq_warehouse.extensions
 @dataclass
 class FoldingSwiss(StylishPart):
     seg_w: float = 28 #Sets the segment dimension which corresponds to the length of your keys
-    seg_l: float = 58 #Sets the segment dimension which corresponds to the width of your keys
+    seg_l: float = 55 #Sets the segment dimension which corresponds to the width of your keys
     seg_thick: float = 6
     hinge_thick: float = 4
     key_thick: float = 7
