@@ -11,7 +11,7 @@ import cq_warehouse.extensions
 @dataclass
 class FoldingSwiss(StylishPart):
     seg_w: float = 28 #Sets the segment dimension which corresponds to the length of your keys
-    seg_l: float = 50 #Sets the segment dimension which corresponds to the width of your keys
+    seg_l: float = 58 #Sets the segment dimension which corresponds to the width of your keys
     seg_thick: float = 6
     hinge_thick: float = 4
     key_thick: float = 7
@@ -20,7 +20,7 @@ class FoldingSwiss(StylishPart):
     max_fold_angle: float = 60
 
     show_screws: bool = True
-    export: bool = True
+    export_for_print: bool = True
 
     def calc_vars(self):
         fastner_length = 16
@@ -49,16 +49,15 @@ class FoldingSwiss(StylishPart):
             Workplane("XY").moveTo(self.seg_w/2-self.seg_l/2).rect(self.seg_l, self.seg_w)
             .extrude(self.seg_thick)
             .edges("|Z").fillet(self.seg_w/2-0.05)
+            .faces("|Z").fillet(2)
             .cut(hinge_cutout)
         )
         
-        seg = seg.faces("|Z").fillet(0.5)
-
         if keyring:
             ring_ir = 3
-            ring_or = ring_ir + 1.5
+            ring_or = ring_ir + 2
             arm_l = 4
-            overlap_l = 2
+            overlap_l = 4
             seg = seg.union(
                 seg.faces(">Z").workplane(invert=1)
                 .moveTo(-self.seg_l+self.seg_w/2-arm_l, 0)
@@ -119,6 +118,9 @@ class FoldingSwiss(StylishPart):
                 .translate((0,0,self.seg_thick if bolt_half else -2*self.key_thick-self.seg_thick))
             )
         
+        if not bolt_half:
+            seg = seg.rotate((0,0,0), (0,0,1), 180)
+
         return seg
 
     def make_mid_spacer(self):
@@ -141,18 +143,22 @@ class FoldingSwiss(StylishPart):
         inner_nut = self.make_seg(a, outer=False, bolt_half=False)
         mid_spacer = self.make_mid_spacer()
 
-        if self.export:
+        if self.export_for_print:
             parts_export = {"outer_bolt": outer_bolt, "inner_bolt": inner_bolt, "outer_nut": outer_nut, "inner_nut": inner_nut, "mid_spacer": mid_spacer}
             {exporters.export(shape, './export/{fname}.stl'.format(fname=name)) for (name, shape) in parts_export.items()}
 
+        alpha = 0.8
+        outer_seg_color = Color(0.2, 0.2, 0.2, alpha)
+        inner_seg_color = Color(0.2, 0.2, 0.6, alpha)
+        spacer_color = Color(0.2, 0.25, 0.2, alpha)
 
-        a.add(outer_bolt)
-        a.add(inner_bolt)
-        a.add(outer_nut)
-        a.add(inner_nut)
-        a.add(mid_spacer)
+        a.add(outer_bolt, color=outer_seg_color)
+        a.add(inner_bolt, color=inner_seg_color)
+        a.add(outer_nut, color=outer_seg_color)
+        a.add(inner_nut, color=inner_seg_color)
+        a.add(mid_spacer, color=spacer_color)
         return a
 
 if "show_object" in locals():
-    FoldingSwiss(show_screws=1, export=1).display(show_object)
+    FoldingSwiss(show_screws=1, export_for_print=1).display(show_object).export("export/folding_swiss.step")
     #FoldingSwiss().display_split(show_object)
